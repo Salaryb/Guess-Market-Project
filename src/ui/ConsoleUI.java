@@ -181,7 +181,7 @@ public class ConsoleUI {
         System.out.print("Enter full path to save (WITHOUT extension): ");
         String path = scanner.nextLine().trim();
         engine.saveSystemState(path);
-        System.out.println("System state saved successfully to " + path + "Savedata.dat!");
+        System.out.println("System state saved successfully to " + path + ".dat!");
     }
 
     private void loadState() {

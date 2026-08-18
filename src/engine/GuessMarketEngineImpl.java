@@ -124,7 +124,7 @@ public class GuessMarketEngineImpl implements IGuessMarketEngine {
 
     @Override
     public void saveSystemState(String pathWithoutExtension) {
-        String fullPath = pathWithoutExtension + "Savedata.dat";
+        String fullPath = pathWithoutExtension + ".dat";
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fullPath))) {
             oos.writeObject(this.events);
         } catch (IOException e) {
@@ -135,7 +135,7 @@ public class GuessMarketEngineImpl implements IGuessMarketEngine {
     @Override
     @SuppressWarnings("unchecked")
     public void loadSystemState(String pathWithoutExtension) {
-        String fullPath = pathWithoutExtension + "Savedata.dat";
+        String fullPath = pathWithoutExtension + ".dat";
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fullPath))) {
             this.events = (List<Event>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
