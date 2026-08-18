@@ -1,4 +1,5 @@
 package engine.models;
 
-public class Trade {
-}
+import java.io.Serializable;
+
+public record Trade(String optionName, int shares, double pricePaid) implements Serializable {}
