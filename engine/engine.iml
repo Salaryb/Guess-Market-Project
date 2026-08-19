@@ -6,10 +6,11 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Downloads/jaxb-ri-4.0.5/jaxb-ri-4.0.5/mod/angus-activation.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../Submission 1/lib/angus-activation.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -18,7 +19,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Downloads/jaxb-ri-4.0.5/jaxb-ri-4.0.5/mod/jakarta.activation-api.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../Submission 1/lib/jakarta.activation-api.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -27,7 +28,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Downloads/jaxb-ri-4.0.5/jaxb-ri-4.0.5/mod/jakarta.xml.bind-api.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../Submission 1/lib/jakarta.xml.bind-api.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -36,7 +37,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Downloads/jaxb-ri-4.0.5/jaxb-ri-4.0.5/mod/jaxb-core.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../Submission 1/lib/jaxb-core.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -45,7 +46,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Downloads/jaxb-ri-4.0.5/jaxb-ri-4.0.5/mod/jaxb-impl.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../Submission 1/lib/jaxb-impl.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -54,7 +55,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Downloads/jaxb-ri-4.0.5/jaxb-ri-4.0.5/mod/jaxb-jxc.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../Submission 1/lib/jaxb-jxc.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -63,14 +64,13 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Downloads/jaxb-ri-4.0.5/jaxb-ri-4.0.5/mod/jaxb-xjc.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../Submission 1/lib/jaxb-xjc.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/Downloads/jaxb-ri-4.0.5/jaxb-ri-4.0.5/mod/jaxb-xjc.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../Submission 1/lib/jaxb-xjc.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
