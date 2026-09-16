@@ -1,15 +1,16 @@
 package engine.xml;
-
 import jakarta.xml.bind.annotation.*;
-import java.util.List;
 
+@SuppressWarnings("unused")
 @XmlRootElement(name = "Guess-Market")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class GuessMarketData {
+    @XmlElement(name = "GM-events")
+    private EventsData events;
 
-    @XmlElementWrapper(name = "GM-events")
-    @XmlElement(name = "GM-event")
-    private List<EventData> events;
+    @XmlElement(name = "GM-users")
+    private UsersData users;
 
-    public List<EventData> getEvents() { return events; }
+    public EventsData getEvents() { return events; }
+    public UsersData getUsers() { return users; }
 }

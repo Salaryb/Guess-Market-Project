@@ -1,15 +1,11 @@
 package engine.xml;
-
 import jakarta.xml.bind.annotation.*;
 
+@SuppressWarnings("unused")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class LmsrData {
-
     @XmlElement(name = "b")
     private int b;
 
-    // Getters
-    public int getB() {
-        return b;
-    }
+    public int getB() { return b; }
 }

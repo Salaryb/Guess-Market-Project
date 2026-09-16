@@ -1,22 +1,15 @@
 package engine.xml;
-
 import jakarta.xml.bind.annotation.*;
 
+@SuppressWarnings("unused")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class CommissionData {
-
-    @XmlAttribute(name = "type")
-    private String type;
-
     @XmlValue
     private int value;
 
-    // Getters
-    public String getType() {
-        return type;
-    }
+    @XmlAttribute(name = "type", required = true)
+    private String type;
 
-    public int getValue() {
-        return value;
-    }
+    public int getValue() { return value; }
+    public String getType() { return type; }
 }

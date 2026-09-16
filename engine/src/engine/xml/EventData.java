@@ -1,11 +1,10 @@
 package engine.xml;
-
 import jakarta.xml.bind.annotation.*;
-import java.util.List;
 
+@SuppressWarnings("unused")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class EventData {
-    @XmlAttribute(name = "name")
+    @XmlAttribute(name = "name", required = true)
     private String name;
 
     @XmlElement(name = "id")
@@ -14,21 +13,19 @@ public class EventData {
     @XmlElement(name = "description")
     private String description;
 
-    @XmlElement(name = "comision")
+    @XmlElement(name = "commission")
     private CommissionData commission;
 
-    @XmlElementWrapper(name = "GM-options")
-    @XmlElement(name = "GM-option")
-    private List<String> options;
+    @XmlElement(name = "GM-options")
+    private OptionsData options;
 
     @XmlElement(name = "GM-method")
     private MethodData method;
 
-    // Getters
     public String getName() { return name; }
     public int getId() { return id; }
     public String getDescription() { return description; }
     public CommissionData getCommission() { return commission; }
-    public List<String> getOptions() { return options; }
+    public OptionsData getOptions() { return options; }
     public MethodData getMethod() { return method; }
 }

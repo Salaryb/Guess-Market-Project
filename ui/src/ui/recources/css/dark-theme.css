@@ -1,0 +1,38 @@
+.root {
+    -fx-background-color: #121212;
+    -fx-font-family: 'Segoe UI', sans-serif;
+}
+
+.main-title {
+    -fx-text-fill: #4a90e2;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 5, 0, 0, 2);
+}
+
+.action-button {
+    -fx-background-color: #2b2b36;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5px;
+    -fx-border-color: #4a90e2;
+    -fx-border-radius: 5px;
+    -fx-padding: 8px 15px;
+    -fx-cursor: hand;
+}
+
+.action-button:hover {
+    -fx-background-color: #4a90e2;
+    -fx-text-fill: #121212;
+}
+
+.action-button:pressed {
+    -fx-background-color: #357abd;
+}
+
+.status-label {
+    -fx-text-fill: #a0a0b0;
+    -fx-font-size: 14px;
+    -fx-font-style: italic;
+}
