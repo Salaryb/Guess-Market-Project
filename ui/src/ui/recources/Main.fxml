@@ -1,0 +1,556 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="900.0" prefWidth="1300.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.controllers.MainController">
+   <top>
+      <VBox alignment="TOP_CENTER" prefHeight="60.0" prefWidth="100.0" spacing="15.0" BorderPane.alignment="TOP_CENTER">
+         <padding>
+            <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+         </padding>
+         <children>
+            <Label styleClass="main-title" text="Guess Market">
+               <font>
+                  <Font name="System Bold" size="24.0" />
+               </font>
+            </Label>
+            <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+               <padding>
+                  <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+               </padding>
+               <children>
+                  <Button fx:id="loadFileBtn" mnemonicParsing="false" onAction="#handleLoadFile" styleClass="action-button" text="Load File" />
+                  <Label fx:id="filePathLabel" styleClass="status-label" text="Currently Loaded File path: None" />
+               </children>
+            </HBox>
+            <HBox prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+               <children>
+                  <ProgressBar fx:id="progressBar" prefWidth="200.0" progress="0.0" />
+                  <Label fx:id="statusLabel" text="-" />
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+   </top>
+   <stylesheets>
+      <URL value="@css/dark-theme.css" />
+      <URL value="@css/light-theme.css" />
+   </stylesheets>
+   <center>
+      <TabPane prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+        <tabs>
+          <Tab text="Events">
+            <content>
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <SplitPane dividerPositions="0.27" prefHeight="160.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                          <items>
+                            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                                 <children>
+                                    <VBox layoutX="106.0" layoutY="62.0" prefHeight="200.0" prefWidth="100.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                       <padding>
+                                          <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                       </padding>
+                                       <children>
+                                          <VBox spacing="5.0" VBox.vgrow="ALWAYS">
+                                             <children>
+                                                <HBox alignment="CENTER">
+                                                   <children>
+                                                      <Label text="Filter Line:">
+                                                         <font>
+                                                            <Font name="System Bold" size="20.0" />
+                                                         </font>
+                                                      </Label>
+                                                   </children>
+                                                </HBox>
+                                                <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                                   <children>
+                                                      <Label text="Event Method:">
+                                                         <font>
+                                                            <Font size="20.0" />
+                                                         </font>
+                                                      </Label>
+                                                      <ToggleButton mnemonicParsing="false" style="-fx-cursor: hand;" text="All">
+                                                         <toggleGroup>
+                                                            <ToggleGroup fx:id="typeGroup" />
+                                                         </toggleGroup>
+                                                      </ToggleButton>
+                                                      <ToggleButton mnemonicParsing="false" style="-fx-cursor: hand;" text="LMSR" toggleGroup="$typeGroup" />
+                                                      <ToggleButton mnemonicParsing="false" style="-fx-cursor: hand;" text="Order Book" toggleGroup="$typeGroup" />
+                                                   </children>
+                                                </HBox>
+                                                <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                                   <children>
+                                                      <Label text="Status:">
+                                                         <font>
+                                                            <Font size="20.0" />
+                                                         </font>
+                                                      </Label>
+                                                      <ToggleButton mnemonicParsing="false" style="-fx-cursor: hand;" text="All">
+                                                         <toggleGroup>
+                                                            <ToggleGroup fx:id="statusGroup" />
+                                                         </toggleGroup>
+                                                      </ToggleButton>
+                                                      <ToggleButton mnemonicParsing="false" style="-fx-cursor: hand;" text="Not Started" toggleGroup="$statusGroup" />
+                                                      <ToggleButton mnemonicParsing="false" style="-fx-cursor: hand;" text="Active" toggleGroup="$statusGroup" />
+                                                      <ToggleButton mnemonicParsing="false" style="-fx-cursor: hand;" text="Ended" toggleGroup="$statusGroup" />
+                                                   </children>
+                                                </HBox>
+                                                <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                                   <children>
+                                                      <Label text="Commission:">
+                                                         <font>
+                                                            <Font size="20.0" />
+                                                         </font>
+                                                      </Label>
+                                                      <ToggleButton mnemonicParsing="false" style="-fx-cursor: hand;" text="All">
+                                                         <toggleGroup>
+                                                            <ToggleGroup fx:id="commissionGroup" />
+                                                         </toggleGroup>
+                                                      </ToggleButton>
+                                                      <ToggleButton mnemonicParsing="false" style="-fx-cursor: hand;" text="On-Close" toggleGroup="$commissionGroup" />
+                                                      <ToggleButton mnemonicParsing="false" style="-fx-cursor: hand;" text="On-Purchase" toggleGroup="$commissionGroup" />
+                                                   </children>
+                                                </HBox>
+                                             </children>
+                                          </VBox>
+                                          <TableView fx:id="eventsTable" VBox.vgrow="ALWAYS">
+                                            <columns>
+                                              <TableColumn prefWidth="75.0" text="Event Name" />
+                                              <TableColumn prefWidth="75.0" text="Type" />
+                                                <TableColumn prefWidth="75.0" text="Status" />
+                                                <TableColumn prefWidth="75.0" text="Commission" />
+                                            </columns>
+                                             <columnResizePolicy>
+                                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                             </columnResizePolicy>
+                                          </TableView>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </AnchorPane>
+                            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                                 <children>
+                                    <ScrollPane fitToWidth="true" layoutY="71.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                       <content>
+                                          <VBox alignment="TOP_CENTER" spacing="5.0">
+                                             <padding>
+                                                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                             </padding>
+                                             <children>
+                                                <Label styleClass="main-title" text="Event Details and Trade">
+                                                   <font>
+                                                      <Font name="System Bold" size="22.0" />
+                                                   </font>
+                                                </Label>
+                                                <GridPane>
+                                                  <columnConstraints>
+                                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                  </columnConstraints>
+                                                  <rowConstraints>
+                                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                  </rowConstraints>
+                                                   <children>
+                                                      <Label text="Event ID:" />
+                                                      <Label fx:id="lblEventId" text="---" GridPane.columnIndex="1" />
+                                                      <Label text="Status:" GridPane.rowIndex="1" />
+                                                      <Label fx:id="lblEventStatus" text="---" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                                      <Label text="Type:" GridPane.rowIndex="2" />
+                                                      <Label fx:id="lblEventType" text="---" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                                      <Label text="Commission:" GridPane.rowIndex="3" />
+                                                      <Label fx:id="lblEventCommission" text="---" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                                   </children>
+                                                </GridPane>
+                                                <Separator />
+                                                <StackPane fx:id="eventSpecificDataPane" prefHeight="300.0" VBox.vgrow="ALWAYS">
+                                                   <children>
+                                                      <VBox fx:id="lmsrDataPane" alignment="TOP_CENTER" prefHeight="600.0" spacing="10.0">
+                                                         <children>
+                                                            <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+                                                               <children>
+                                                                  <Label text="Event Account Balance:" />
+                                                                  <Label fx:id="lblLmsrAccount" text="---" />
+                                                                  <Label text="|" />
+                                                                  <Label text="Total Commission:" />
+                                                                  <Label fx:id="lblLmsrCommission" text="---" />
+                                                                  <Label text="|" />
+                                                                  <Label text="Winning Option:" />
+                                                                  <Label fx:id="lblLmsrWinner" text="---" />
+                                                               </children>
+                                                               <padding>
+                                                                  <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                                               </padding>
+                                                            </HBox>
+                                                            <Label text="Current Status (options)">
+                                                               <font>
+                                                                  <Font name="System Bold" size="18.0" />
+                                                               </font>
+                                                            </Label>
+                                                            <TableView fx:id="lmsrStatusTable" prefHeight="200.0">
+                                                              <columns>
+                                                                <TableColumn prefWidth="75.0" text="Option Name" />
+                                                                <TableColumn prefWidth="75.0" text="Current Value (0-1)" />
+                                                                  <TableColumn prefWidth="75.0" text="Total Share Bought" />
+                                                              </columns>
+                                                               <columnResizePolicy>
+                                                                  <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                                               </columnResizePolicy>
+                                                            </TableView>
+                                                            <Label text="Trade History" />
+                                                            <TableView fx:id="lmsrHistoryTable" prefHeight="200.0" VBox.vgrow="ALWAYS">
+                                                              <columns>
+                                                                <TableColumn prefWidth="75.0" text="Option Bought" />
+                                                                <TableColumn prefWidth="75.0" text="Quantity" />
+                                                                  <TableColumn prefWidth="75.0" text="Price Paid" />
+                                                              </columns>
+                                                               <columnResizePolicy>
+                                                                  <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                                               </columnResizePolicy>
+                                                            </TableView>
+                                                         </children>
+                                                      </VBox>
+                                                      <VBox fx:id="orderBookDataPane" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
+                                                         <children>
+                                                            <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+                                                               <children>
+                                                                  <Label text="LAST:" />
+                                                                  <Label fx:id="lblLast" text="---" />
+                                                                  <Label text="|" />
+                                                                  <Label text="BID:" />
+                                                                  <Label fx:id="lblBid" text="---" />
+                                                                  <Label text="|" />
+                                                                  <Label text="MID:" />
+                                                                  <Label fx:id="lblMid" text="---" />
+                                                                  <Label text="|" />
+                                                                  <Label text="ASK:" />
+                                                                  <Label fx:id="lblAsk" text="---" />
+                                                                  <Label text="|" />
+                                                                  <Label text="SPREAD:" />
+                                                                  <Label fx:id="lblSpread" text="---" />
+                                                               </children>
+                                                            </HBox>
+                                                            <HBox prefHeight="100.0" prefWidth="200.0" spacing="20.0" VBox.vgrow="ALWAYS">
+                                                               <children>
+                                                                  <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                                                                     <children>
+                                                                        <Label text="Buy Orders (Bids)">
+                                                                           <font>
+                                                                              <Font name="System Bold" size="18.0" />
+                                                                           </font>
+                                                                        </Label>
+                                                                        <TableView fx:id="buyOrdersTable" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                                                                          <columns>
+                                                                            <TableColumn prefWidth="75.0" text="User Name" />
+                                                                            <TableColumn prefWidth="75.0" text="Quantity" />
+                                                                              <TableColumn prefWidth="75.0" text="Price" />
+                                                                          </columns>
+                                                                           <columnResizePolicy>
+                                                                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                                                           </columnResizePolicy>
+                                                                        </TableView>
+                                                                     </children>
+                                                                  </VBox>
+                                                                  <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                                                                     <children>
+                                                                        <Label text="Sell Orders (Asks)" />
+                                                                        <TableView fx:id="sellOrdersTable" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                                                                          <columns>
+                                                                            <TableColumn prefWidth="75.0" text="User Name" />
+                                                                            <TableColumn prefWidth="75.0" text="Quantity" />
+                                                                              <TableColumn prefWidth="75.0" text="Price" />
+                                                                          </columns>
+                                                                           <columnResizePolicy>
+                                                                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                                                           </columnResizePolicy>
+                                                                        </TableView>
+                                                                     </children>
+                                                                  </VBox>
+                                                               </children>
+                                                            </HBox>
+                                                         </children>
+                                                      </VBox>
+                                                   </children>
+                                                </StackPane>
+                                                <Label text="Participants Info">
+                                                   <font>
+                                                      <Font name="System Bold" size="18.0" />
+                                                   </font>
+                                                </Label>
+                                                <TableView fx:id="participantsTable" prefHeight="150.0">
+                                                  <columns>
+                                                    <TableColumn prefWidth="75.0" text="Name" />
+                                                    <TableColumn prefWidth="75.0" text="Holdings Quantity" />
+                                                      <TableColumn prefWidth="75.0" text="Holdings Value" />
+                                                  </columns>
+                                                   <columnResizePolicy>
+                                                      <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                                   </columnResizePolicy>
+                                                </TableView>
+                                             </children>
+                                          </VBox>
+                                       </content>
+                                    </ScrollPane>
+                                 </children>
+                              </AnchorPane>
+                          </items>
+                        </SplitPane>
+                     </children>
+                  </AnchorPane>
+            </content>
+          </Tab>
+          <Tab text="Users">
+            <content>
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <SplitPane dividerPositions="0.29797979797979796" layoutX="212.0" layoutY="175.0" prefHeight="160.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                          <items>
+                            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                                 <children>
+                                    <VBox alignment="TOP_CENTER" layoutX="79.0" layoutY="47.0" prefHeight="200.0" prefWidth="100.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                       <padding>
+                                          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                       </padding>
+                                       <children>
+                                          <Label text="Registered Users">
+                                             <font>
+                                                <Font name="System Bold" size="18.0" />
+                                             </font>
+                                          </Label>
+                                          <TableView fx:id="usersTable" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                                            <columns>
+                                              <TableColumn prefWidth="75.0" text="User Name" />
+                                              <TableColumn prefWidth="75.0" text="Account Balance" />
+                                            </columns>
+                                             <columnResizePolicy>
+                                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                             </columnResizePolicy>
+                                          </TableView>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </AnchorPane>
+                            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                                 <children>
+                                    <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                       <padding>
+                                          <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                       </padding>
+                                       <children>
+                                          <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0" spacing="10.0">
+                                             <padding>
+                                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                             </padding>
+                                             <children>
+                                                <Label text="Selected User:">
+                                                   <font>
+                                                      <Font size="24.0" />
+                                                   </font>
+                                                </Label>
+                                                <Label fx:id="lblUserName" text="---">
+                                                   <font>
+                                                      <Font size="24.0" />
+                                                   </font>
+                                                </Label>
+                                                <Label text="|">
+                                                   <font>
+                                                      <Font size="24.0" />
+                                                   </font>
+                                                </Label>
+                                                <Label text="Balance:">
+                                                   <font>
+                                                      <Font size="24.0" />
+                                                   </font>
+                                                </Label>
+                                                <Label fx:id="lblUserBalance" text="---">
+                                                   <font>
+                                                      <Font size="24.0" />
+                                                   </font>
+                                                </Label>
+                                                <Label text="|">
+                                                   <font>
+                                                      <Font size="24.0" />
+                                                   </font>
+                                                </Label>
+                                                <Label text="Status">
+                                                   <font>
+                                                      <Font size="24.0" />
+                                                   </font>
+                                                </Label>
+                                                <Label fx:id="lblUserStatus" text="---">
+                                                   <font>
+                                                      <Font size="24.0" />
+                                                   </font>
+                                                </Label>
+                                             </children>
+                                          </HBox>
+                                          <Label text="Participating Events">
+                                             <font>
+                                                <Font name="System Bold" size="18.0" />
+                                             </font>
+                                          </Label>
+                                          <TableView fx:id="userEventsTable" prefHeight="150.0" prefWidth="200.0">
+                                            <columns>
+                                              <TableColumn prefWidth="75.0" text="Event ID" />
+                                              <TableColumn prefWidth="75.0" text="Type" />
+                                                <TableColumn prefWidth="75.0" text="Role" />
+                                                <TableColumn prefWidth="75.0" text="Status" />
+                                            </columns>
+                                             <columnResizePolicy>
+                                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                             </columnResizePolicy>
+                                          </TableView>
+                                          <HBox fx:id="mmActionsBox" alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="15.0">
+                                             <children>
+                                                <Button fx:id="btnStartEvent" mnemonicParsing="false" text="Start Event" />
+                                                <Label text="Select Winner:" />
+                                                <ComboBox fx:id="cmbWinnerSelection" prefWidth="150.0" />
+                                                <Button fx:id="btnCloseEvent" mnemonicParsing="false" text="Close Event" />
+                                             </children>
+                                             <padding>
+                                                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                             </padding>
+                                          </HBox>
+                                          <StackPane fx:id="userEventDetailsStackPane" prefHeight="150.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                                             <children>
+                                                <VBox fx:id="userLmsrPane" prefHeight="200.0" prefWidth="100.0" spacing="10.0" visible="false">
+                                                   <children>
+                                                      <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0" spacing="20.0" VBox.vgrow="ALWAYS">
+                                                         <children>
+                                                            <Label text="Total Commission Paid:">
+                                                               <font>
+                                                                  <Font size="18.0" />
+                                                               </font>
+                                                            </Label>
+                                                            <Label fx:id="lblUserLmsrCommission" text="---">
+                                                               <font>
+                                                                  <Font size="18.0" />
+                                                               </font>
+                                                            </Label>
+                                                            <Label text="|">
+                                                               <font>
+                                                                  <Font size="18.0" />
+                                                               </font>
+                                                            </Label>
+                                                            <Label fx:id="lblUserLmsrClosedInfo" text="---">
+                                                               <font>
+                                                                  <Font size="18.0" />
+                                                               </font>
+                                                            </Label>
+                                                         </children>
+                                                         <padding>
+                                                            <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                                         </padding>
+                                                      </HBox>
+                                                      <HBox fx:id="lmsrTradeBox" alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+                                                         <children>
+                                                            <ComboBox fx:id="cmbLmsrOption" prefWidth="150.0" />
+                                                            <TextField fx:id="txtLmsrQuantity" promptText="Quantity" />
+                                                            <Button fx:id="btnLmsrBuy" mnemonicParsing="false" text="Buy" />
+                                                            <Button fx:id="btnLmsrSell" mnemonicParsing="false" text="Sell" />
+                                                         </children>
+                                                      </HBox>
+                                                      <TableView fx:id="userLmsrHistoryTable" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                                                        <columns>
+                                                          <TableColumn prefWidth="75.0" text="Option Bought" />
+                                                          <TableColumn prefWidth="75.0" text="Quantity" />
+                                                            <TableColumn prefWidth="75.0" text="Price Paid" />
+                                                        </columns>
+                                                         <columnResizePolicy>
+                                                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                                         </columnResizePolicy>
+                                                      </TableView>
+                                                   </children>
+                                                </VBox>
+                                                <VBox fx:id="userObPane" prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+                                                   <children>
+                                                      <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0" spacing="20.0">
+                                                         <children>
+                                                            <Label text="Total Commission Paid:">
+                                                               <font>
+                                                                  <Font size="18.0" />
+                                                               </font>
+                                                            </Label>
+                                                            <Label fx:id="lblUserObCommission" text="---">
+                                                               <font>
+                                                                  <Font size="18.0" />
+                                                               </font>
+                                                            </Label>
+                                                            <Label text="|">
+                                                               <font>
+                                                                  <Font size="18.0" />
+                                                               </font>
+                                                            </Label>
+                                                            <Label fx:id="lblUserObClosedInfo" text="---">
+                                                               <font>
+                                                                  <Font size="18.0" />
+                                                               </font>
+                                                            </Label>
+                                                         </children>
+                                                         <padding>
+                                                            <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                                         </padding>
+                                                      </HBox>
+                                                      <HBox fx:id="obTradeBox" alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+                                                         <children>
+                                                            <ComboBox fx:id="cmbObAction" prefWidth="150.0" />
+                                                            <ComboBox fx:id="cmbObOption" prefWidth="150.0" />
+                                                            <TextField fx:id="txtObQuantity" promptText="Quantity" />
+                                                            <TextField fx:id="txtObPrice" promptText="Price" />
+                                                            <Button fx:id="btnObSubmit" mnemonicParsing="false" text="Submit Order" />
+                                                         </children>
+                                                      </HBox>
+                                                      <TableView fx:id="userObHoldingsTable" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                                                        <columns>
+                                                            <TableColumn prefWidth="75.0" text="Option" />
+                                                          <TableColumn prefWidth="75.0" text="Shares Held" />
+                                                          <TableColumn prefWidth="75.0" text="Total Paid" />
+                                                        </columns>
+                                                         <columnResizePolicy>
+                                                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                                         </columnResizePolicy>
+                                                      </TableView>
+                                                   </children>
+                                                </VBox>
+                                             </children>
+                                          </StackPane>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </AnchorPane>
+                          </items>
+                        </SplitPane>
+                     </children></AnchorPane>
+            </content>
+          </Tab>
+        </tabs>
+      </TabPane>
+   </center>
+</BorderPane>

@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Main-Class: ui.Launcher
+Class-Path: jakarta.xml.bind-api.jar jaxb-xjc.jar jaxb-core.jar jaxb-imp
+ l.jar jakarta.activation-api.jar jaxb-jxc.jar angus-activation.jar java
+ fx-swt.jar javafx.web.jar javafx.base.jar javafx.fxml.jar javafx.media.
+ jar javafx.swing.jar jdk.jsobject.jar javafx.controls.jar javafx.graphi
+ cs.jar jfx.incubator.input.jar jfx.incubator.richtext.jar
+
