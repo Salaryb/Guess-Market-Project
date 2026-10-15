@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guess Market</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ===== Login screen ===== -->
+  <section id="login-screen" class="login-screen">
+    <form id="login-form" class="login-card" autocomplete="off">
+      <h1 class="brand">Guess Market</h1>
+      <p class="muted">Enter a unique user name to log in</p>
+      <input id="login-name" type="text" placeholder="User name" maxlength="30" autofocus>
+      <button id="login-button" type="submit" class="btn primary">Login</button>
+      <p id="login-error" class="error-text"></p>
+    </form>
+  </section>
+
+  <!-- ===== Main screen ===== -->
+  <section id="main-screen" class="main-screen hidden">
+    <header class="top-bar">
+      <nav class="tabs">
+        <button class="tab active" data-tab="events">Events</button>
+        <button class="tab" data-tab="account">Account</button>
+      </nav>
+      <h1 class="brand">Guess Market</h1>
+      <div class="user-box">
+        <span id="connection-status" class="error-text"></span>
+        <span id="header-user"></span>
+        <span id="header-balance"></span>
+        <button id="logout-button" class="btn">Logout</button>
+      </div>
+    </header>
+
+    <!-- Events tab: events with filters | details of the selected event -->
+    <main id="tab-events" class="tab-page split">
+      <section class="panel">
+        <h2>Events</h2>
+        <div class="filters">
+          <div class="filter-row" data-filter="type">
+            <span class="filter-label">Method:</span>
+            <button class="chip selected" data-value="All">All</button>
+            <button class="chip" data-value="LMSR">LMSR</button>
+            <button class="chip" data-value="Order Book">Order Book</button>
+          </div>
+          <div class="filter-row" data-filter="status">
+            <span class="filter-label">Status:</span>
+            <button class="chip selected" data-value="All">All</button>
+            <button class="chip" data-value="Not Started">Not Started</button>
+            <button class="chip" data-value="Active">Active</button>
+            <button class="chip" data-value="Ended">Ended</button>
+          </div>
+          <div class="filter-row" data-filter="commission">
+            <span class="filter-label">Commission:</span>
+            <button class="chip selected" data-value="All">All</button>
+            <button class="chip" data-value="on-close">on-close</button>
+            <button class="chip" data-value="on-purchase">on-purchase</button>
+          </div>
+        </div>
+        <div class="table-wrap grow"><table id="events-table" class="data-table"></table></div>
+      </section>
+      <section class="panel scroll">
+        <div id="event-details"><p class="muted">Select an event to see its details.</p></div>
+      </section>
+    </main>
+
+    <!-- Account tab: users + my account | my events + selected event (details and trade) -->
+    <main id="tab-account" class="tab-page split account hidden">
+      <div class="column">
+        <section class="panel">
+          <h2>Users</h2>
+          <div class="table-wrap"><table id="users-table" class="data-table"></table></div>
+        </section>
+        <section class="panel grow">
+          <h2>Account Details</h2>
+          <p>Account status: <span id="account-status"></span></p>
+          <h3>Account transactions (latest first)</h3>
+          <div class="table-wrap grow"><table id="transactions-table" class="data-table"></table></div>
+          <form id="deposit-form" class="card inline-form">
+            <strong id="account-balance"></strong>
+            <input id="deposit-amount" type="text" inputmode="decimal" placeholder="Amount">
+            <button type="submit" class="btn primary">Load Funds</button>
+          </form>
+        </section>
+      </div>
+      <div class="column wide">
+        <section class="panel">
+          <div class="panel-title">
+            <h2>Events Participation \ Owner</h2>
+            <label class="checkbox"><input id="only-mine" type="checkbox"> Only my events</label>
+          </div>
+          <div class="table-wrap"><table id="user-events-table" class="data-table"></table></div>
+        </section>
+        <section class="panel grow scroll">
+          <div id="user-event-header"><p class="muted">Select an event to see your involvement in it and to trade.</p></div>
+          <div id="user-event-actions"></div>
+          <div id="user-event-data"></div>
+        </section>
+      </div>
+    </main>
+  </section>
+
+  <div id="toasts" class="toasts"></div>
+  <script src="app.js"></script>
+</body>
+</html>
