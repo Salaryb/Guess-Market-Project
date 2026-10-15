@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="client.controllers.MainController">
+   <top>
+      <StackPane styleClass="header">
+         <padding>
+            <Insets bottom="6.0" left="15.0" right="15.0" top="6.0" />
+         </padding>
+         <Label styleClass="main-title" text="Guess Market" StackPane.alignment="CENTER" />
+         <HBox alignment="CENTER_RIGHT" spacing="12.0" pickOnBounds="false">
+            <Label fx:id="statusLabel" minWidth="0.0" styleClass="status-label" />
+            <Pane HBox.hgrow="ALWAYS" />
+            <Label fx:id="userLabel" styleClass="header-info" />
+            <Label fx:id="balanceLabel" styleClass="header-info" />
+            <Button onAction="#onLogout" text="Logout" />
+         </HBox>
+      </StackPane>
+   </top>
+   <center>
+      <TabPane tabClosingPolicy="UNAVAILABLE">
+         <Tab text="Events">
+            <fx:include fx:id="eventsTab" source="events.fxml" />
+         </Tab>
+         <Tab text="Account">
+            <fx:include fx:id="accountTab" source="account.fxml" />
+         </Tab>
+         <Tab text="Chat">
+            <fx:include fx:id="chatTab" source="chat.fxml" />
+         </Tab>
+      </TabPane>
+   </center>
+</BorderPane>

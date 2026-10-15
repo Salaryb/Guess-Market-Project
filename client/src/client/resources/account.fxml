@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Layout follows the exercise 3 sketch ("Account" tab) -->
+<VBox spacing="8.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="client.controllers.AccountController">
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
+
+   <!-- Load file + file path -->
+   <HBox alignment="CENTER_LEFT" spacing="10.0">
+      <Button fx:id="uploadButton" minWidth="-Infinity" onAction="#onUploadFile" styleClass="load-button" text="Load File" />
+      <Label fx:id="filePathLabel" maxWidth="Infinity" minWidth="0.0" styleClass="file-path" text="No file loaded yet" HBox.hgrow="ALWAYS" />
+      <ProgressBar fx:id="progressBar" minWidth="-Infinity" prefWidth="140.0" />
+   </HBox>
+
+   <SplitPane dividerPositions="0.33" VBox.vgrow="ALWAYS">
+      <!-- Left column: users table + my account details -->
+      <SplitPane dividerPositions="0.4" minWidth="260.0" orientation="VERTICAL">
+         <VBox spacing="6.0">
+            <padding><Insets bottom="5.0" left="5.0" right="5.0" top="5.0" /></padding>
+            <Label styleClass="section-title" text="Users" />
+            <TableView fx:id="usersTable" VBox.vgrow="ALWAYS" />
+         </VBox>
+         <VBox spacing="6.0">
+            <padding><Insets bottom="5.0" left="5.0" right="5.0" top="5.0" /></padding>
+            <Label styleClass="section-title" text="Account Details" />
+            <HBox alignment="CENTER_LEFT" spacing="8.0">
+               <Label text="Account status:" />
+               <Label fx:id="accountStatusLabel" />
+            </HBox>
+            <Label styleClass="field-name" text="Account transactions (latest first)" />
+            <TableView fx:id="transactionsTable" VBox.vgrow="ALWAYS" />
+            <VBox spacing="6.0" styleClass="card">
+               <padding><Insets bottom="8.0" left="8.0" right="8.0" top="8.0" /></padding>
+               <Label fx:id="balanceLabel" styleClass="section-title" />
+               <HBox alignment="CENTER_LEFT" spacing="8.0">
+                  <TextField fx:id="depositField" onAction="#onDeposit" prefWidth="110.0" promptText="Amount" HBox.hgrow="ALWAYS" />
+                  <Button fx:id="depositButton" minWidth="-Infinity" onAction="#onDeposit" styleClass="action-button" text="Load Funds" />
+               </HBox>
+            </VBox>
+         </VBox>
+      </SplitPane>
+
+      <!-- Right column: my events + the selected event (details and trade) -->
+      <SplitPane dividerPositions="0.32" minWidth="380.0" orientation="VERTICAL">
+         <VBox spacing="6.0">
+            <padding><Insets bottom="5.0" left="5.0" right="5.0" top="5.0" /></padding>
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <Label styleClass="section-title" text="Events Participation \ Owner" />
+               <Pane HBox.hgrow="ALWAYS" />
+               <CheckBox fx:id="onlyMyEventsCheck" text="Only my events" />
+            </HBox>
+            <TableView fx:id="userEventsTable" VBox.vgrow="ALWAYS" />
+         </VBox>
+
+         <ScrollPane fitToWidth="true">
+            <VBox spacing="10.0">
+               <padding><Insets bottom="5.0" left="8.0" right="8.0" top="5.0" /></padding>
+               <Label fx:id="eventPlaceholderLabel" styleClass="status-label" wrapText="true" />
+               <VBox fx:id="eventDetailsBox" spacing="10.0">
+                  <Label fx:id="selectedEventLabel" styleClass="section-title" wrapText="true" />
+                  <Label fx:id="eventInfoLabel" wrapText="true" />
+
+                  <FlowPane hgap="10.0" vgap="10.0">
+                     <VBox fx:id="marketMakerBox" spacing="6.0" styleClass="card">
+                        <padding><Insets bottom="8.0" left="8.0" right="8.0" top="8.0" /></padding>
+                        <Label styleClass="field-name" text="Market maker actions" />
+                        <FlowPane hgap="8.0" vgap="6.0" alignment="CENTER_LEFT">
+                           <Button fx:id="activateButton" onAction="#onActivate" styleClass="action-button" text="Activate Event" />
+                           <ComboBox fx:id="winnerCombo" prefWidth="140.0" promptText="Winning option" />
+                           <Button fx:id="closeEventButton" onAction="#onCloseEvent" styleClass="action-button" text="Close Event" />
+                        </FlowPane>
+                     </VBox>
+
+                     <VBox fx:id="lmsrTradeBox" spacing="6.0" styleClass="card">
+                        <padding><Insets bottom="8.0" left="8.0" right="8.0" top="8.0" /></padding>
+                        <Label styleClass="field-name" text="Buy shares (LMSR)" />
+                        <FlowPane hgap="8.0" vgap="6.0" alignment="CENTER_LEFT">
+                           <ComboBox fx:id="lmsrOptionCombo" prefWidth="140.0" promptText="Option" />
+                           <TextField fx:id="lmsrSharesField" onAction="#onBuyShares" prefWidth="90.0" promptText="Shares" />
+                           <Button fx:id="buyButton" onAction="#onBuyShares" styleClass="action-button" text="Buy" />
+                        </FlowPane>
+                     </VBox>
+
+                     <VBox fx:id="orderTradeBox" spacing="6.0" styleClass="card">
+                        <padding><Insets bottom="8.0" left="8.0" right="8.0" top="8.0" /></padding>
+                        <Label styleClass="field-name" text="Place an order (Order Book)" />
+                        <FlowPane hgap="8.0" vgap="6.0" alignment="CENTER_LEFT">
+                           <ComboBox fx:id="orderSideCombo" prefWidth="80.0" />
+                           <ComboBox fx:id="orderOptionCombo" prefWidth="130.0" promptText="Option" />
+                           <TextField fx:id="orderSharesField" prefWidth="80.0" promptText="Shares" />
+                           <TextField fx:id="orderPriceField" onAction="#onPlaceOrder" prefWidth="100.0" promptText="Price / share" />
+                           <Button fx:id="placeOrderButton" onAction="#onPlaceOrder" styleClass="action-button" text="Submit Order" />
+                        </FlowPane>
+                     </VBox>
+                  </FlowPane>
+
+                  <GridPane hgap="12.0" vgap="4.0">
+                     <columnConstraints>
+                        <ColumnConstraints minWidth="150.0" />
+                        <ColumnConstraints hgrow="ALWAYS" />
+                     </columnConstraints>
+                     <Label styleClass="field-name" text="Commission I paid:" GridPane.rowIndex="0" />
+                     <Label fx:id="commissionPaidLabel" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                     <Label styleClass="field-name" text="My profit / loss:" GridPane.rowIndex="1" />
+                     <Label fx:id="profitLossLabel" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                     <Label styleClass="field-name" text="Winning option:" GridPane.rowIndex="2" />
+                     <Label fx:id="winnerLabel" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                  </GridPane>
+
+                  <Label styleClass="field-name" text="My holdings" />
+                  <TableView fx:id="holdingsTable" prefHeight="100.0" />
+
+                  <VBox fx:id="lmsrHistoryBox" spacing="6.0">
+                     <Label styleClass="field-name" text="My trades in this event (latest first)" />
+                     <TableView fx:id="myTradesTable" prefHeight="130.0" />
+                     <Label styleClass="field-name" text="Total shares per option" />
+                     <TableView fx:id="totalsTable" prefHeight="100.0" />
+                  </VBox>
+
+                  <VBox fx:id="openOrdersBox" spacing="6.0">
+                     <Label styleClass="field-name" text="My waiting orders" />
+                     <TableView fx:id="openOrdersTable" prefHeight="120.0" />
+                  </VBox>
+               </VBox>
+            </VBox>
+         </ScrollPane>
+      </SplitPane>
+   </SplitPane>
+</VBox>

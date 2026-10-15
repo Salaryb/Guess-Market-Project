@@ -1,35 +1,52 @@
 package engine.xml;
 
+import exception.GuessMarketException;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.UnmarshalException;
 import jakarta.xml.bind.Unmarshaller;
 import org.xml.sax.SAXException;
+
 import javax.xml.XMLConstants;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
-import java.io.File;
+import java.io.InputStream;
+import java.net.URL;
 
-public class XmlParser {
+/**
+ * Reads a Guess Market XML (exercise 3 format) from a stream.
+ * The file is never saved to disk: the server parses the uploaded content directly.
+ * The schema is packaged inside the engine jar, next to this class.
+ */
+public final class XmlParser {
+    private static final String SCHEMA_RESOURCE = "GM-EX3-Schema.xsd";
 
-    public static GuessMarketData parseXml(String filePath) throws JAXBException, SAXException {
-        File file = new File(filePath);
-        if (!file.exists() || !filePath.toLowerCase().endsWith(".xml")) {
-            throw new IllegalArgumentException("The file does not exist or is not a valid XML format.");
+    private XmlParser() {
+    }
+
+    public static GuessMarketData parse(InputStream xmlContent) {
+        try {
+            Unmarshaller unmarshaller = JAXBContext.newInstance(GuessMarketData.class).createUnmarshaller();
+            unmarshaller.setSchema(loadSchema());
+            return (GuessMarketData) unmarshaller.unmarshal(xmlContent);
+        } catch (UnmarshalException e) {
+            Throwable cause = e.getLinkedException() != null ? e.getLinkedException() : e;
+            throw new GuessMarketException("The file is not a valid Guess Market XML (exercise 3 format): "
+                    + cause.getMessage());
+        } catch (JAXBException e) {
+            throw new GuessMarketException("Failed reading the XML file: " + e.getMessage());
         }
+    }
 
-        JAXBContext context = JAXBContext.newInstance(GuessMarketData.class);
-        Unmarshaller unmarshaller = context.createUnmarshaller();
-
-        SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        File schemaFile = new File("GM-EX2-Schema.xsd");
-
-        if (!schemaFile.exists()) {
-            throw new IllegalArgumentException("The schema file (GM-EX2-Schema.xsd) was not found in the root directory.");
+    private static Schema loadSchema() {
+        URL schemaUrl = XmlParser.class.getResource(SCHEMA_RESOURCE);
+        if (schemaUrl == null) {
+            throw new GuessMarketException("Internal error: the schema " + SCHEMA_RESOURCE + " is missing from the engine.");
         }
-
-        Schema schema = schemaFactory.newSchema(schemaFile);
-        unmarshaller.setSchema(schema);
-
-        return (GuessMarketData) unmarshaller.unmarshal(file);
+        try {
+            return SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaUrl);
+        } catch (SAXException e) {
+            throw new GuessMarketException("Internal error: failed loading the schema: " + e.getMessage());
+        }
     }
 }

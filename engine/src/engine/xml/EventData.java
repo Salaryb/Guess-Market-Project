@@ -7,9 +7,6 @@ public class EventData {
     @XmlAttribute(name = "name", required = true)
     private String name;
 
-    @XmlElement(name = "id")
-    private int id;
-
     @XmlElement(name = "description")
     private String description;
 
@@ -23,7 +20,6 @@ public class EventData {
     private MethodData method;
 
     public String getName() { return name; }
-    public int getId() { return id; }
     public String getDescription() { return description; }
     public CommissionData getCommission() { return commission; }
     public OptionsData getOptions() { return options; }

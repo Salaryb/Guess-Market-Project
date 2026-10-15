@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<SplitPane dividerPositions="0.45" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="client.controllers.EventsController">
+   <!-- Left: filters + all events -->
+   <VBox minWidth="300.0" spacing="8.0">
+      <padding>
+         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+      </padding>
+      <Label styleClass="section-title" text="Events" />
+      <FlowPane hgap="6.0" vgap="4.0">
+         <Label minWidth="85.0" text="Method:" />
+         <ToggleButton selected="true" styleClass="filter-toggle-button" text="All">
+            <toggleGroup><ToggleGroup fx:id="typeGroup" /></toggleGroup>
+         </ToggleButton>
+         <ToggleButton styleClass="filter-toggle-button" text="LMSR" toggleGroup="$typeGroup" />
+         <ToggleButton styleClass="filter-toggle-button" text="Order Book" toggleGroup="$typeGroup" />
+      </FlowPane>
+      <FlowPane hgap="6.0" vgap="4.0">
+         <Label minWidth="85.0" text="Status:" />
+         <ToggleButton selected="true" styleClass="filter-toggle-button" text="All">
+            <toggleGroup><ToggleGroup fx:id="statusGroup" /></toggleGroup>
+         </ToggleButton>
+         <ToggleButton styleClass="filter-toggle-button" text="Not Started" toggleGroup="$statusGroup" />
+         <ToggleButton styleClass="filter-toggle-button" text="Active" toggleGroup="$statusGroup" />
+         <ToggleButton styleClass="filter-toggle-button" text="Ended" toggleGroup="$statusGroup" />
+      </FlowPane>
+      <FlowPane hgap="6.0" vgap="4.0">
+         <Label minWidth="85.0" text="Commission:" />
+         <ToggleButton selected="true" styleClass="filter-toggle-button" text="All">
+            <toggleGroup><ToggleGroup fx:id="commissionGroup" /></toggleGroup>
+         </ToggleButton>
+         <ToggleButton styleClass="filter-toggle-button" text="on-close" toggleGroup="$commissionGroup" />
+         <ToggleButton styleClass="filter-toggle-button" text="on-purchase" toggleGroup="$commissionGroup" />
+      </FlowPane>
+      <TableView fx:id="eventsTable" VBox.vgrow="ALWAYS" />
+   </VBox>
+
+   <!-- Right: details of the selected event (exercise 3 sketch: option order books side by side, participants below) -->
+   <ScrollPane fitToWidth="true" minWidth="300.0">
+      <VBox spacing="10.0">
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+         <Label fx:id="placeholderLabel" styleClass="status-label" />
+         <VBox fx:id="detailsBox" spacing="10.0">
+            <Label fx:id="eventNameLabel" styleClass="section-title" wrapText="true" />
+            <Label fx:id="descriptionLabel" wrapText="true" />
+            <GridPane hgap="12.0" vgap="4.0">
+               <columnConstraints>
+                  <ColumnConstraints minWidth="130.0" />
+                  <ColumnConstraints hgrow="ALWAYS" />
+               </columnConstraints>
+               <Label styleClass="field-name" text="Method:" GridPane.rowIndex="0" />
+               <Label fx:id="typeLabel" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+               <Label styleClass="field-name" text="Status:" GridPane.rowIndex="1" />
+               <Label fx:id="statusLabel" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+               <Label styleClass="field-name" text="Commission:" GridPane.rowIndex="2" />
+               <Label fx:id="commissionLabel" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+               <Label styleClass="field-name" text="Market Maker:" GridPane.rowIndex="3" />
+               <Label fx:id="marketMakerLabel" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+               <Label styleClass="field-name" text="Event Account:" GridPane.rowIndex="4" />
+               <Label fx:id="accountLabel" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+               <Label styleClass="field-name" text="Commission Collected:" GridPane.rowIndex="5" />
+               <Label fx:id="totalCommissionLabel" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+               <Label styleClass="field-name" text="Winning Option:" GridPane.rowIndex="6" />
+               <Label fx:id="winnerLabel" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+            </GridPane>
+
+            <VBox fx:id="lmsrBox" spacing="6.0">
+               <Label styleClass="section-title" text="Current State" />
+               <TableView fx:id="lmsrOptionsTable" prefHeight="110.0" />
+               <Label styleClass="section-title" text="Trade History (latest first)" />
+               <TableView fx:id="lmsrTradesTable" prefHeight="180.0" />
+            </VBox>
+
+            <VBox fx:id="orderBookBox" spacing="6.0">
+               <Label styleClass="section-title" text="Order Books (one per option)" />
+               <HBox fx:id="orderBooksContainer" spacing="10.0" />
+            </VBox>
+
+            <Label styleClass="section-title" text="Participants" />
+            <TableView fx:id="participantsTable" prefHeight="160.0" />
+         </VBox>
+      </VBox>
+   </ScrollPane>
+</SplitPane>

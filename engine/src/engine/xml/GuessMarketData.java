@@ -8,9 +8,5 @@ public class GuessMarketData {
     @XmlElement(name = "GM-events")
     private EventsData events;
 
-    @XmlElement(name = "GM-users")
-    private UsersData users;
-
     public EventsData getEvents() { return events; }
-    public UsersData getUsers() { return users; }
 }

@@ -1,13 +1,28 @@
 package engine;
 
-public class LMSRMath {
-    public static double calculateCost(int q1, int q2, int b) {
-        return b * Math.log(Math.exp((double) q1 / b) + Math.exp((double) q2 / b));
+import java.util.List;
+
+/** The two LMSR equations (see appendix A), generalized to any number of options. */
+public final class LMSRMath {
+
+    private LMSRMath() {
     }
 
-    public static double calculateProbability(int qTarget, int qOther, int b) {
-        double expTarget = Math.exp((double) qTarget / b);
-        double expOther = Math.exp((double) qOther / b);
-        return expTarget / (expTarget + expOther);
+    /** C(q1..qn) = b * ln( sum of e^(qi/b) ) */
+    public static double calculateCost(List<Integer> quantities, int b) {
+        double sum = 0.0;
+        for (int q : quantities) {
+            sum += Math.exp((double) q / b);
+        }
+        return b * Math.log(sum);
+    }
+
+    /** price(i) = e^(qi/b) / sum of e^(qj/b) */
+    public static double calculatePrice(List<Integer> quantities, int index, int b) {
+        double sum = 0.0;
+        for (int q : quantities) {
+            sum += Math.exp((double) q / b);
+        }
+        return Math.exp((double) quantities.get(index) / b) / sum;
     }
 }

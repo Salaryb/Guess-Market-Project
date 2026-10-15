@@ -1,33 +1,30 @@
 package engine.models;
-import java.time.LocalDateTime;
 
-public class Order implements Comparable<Order> {
+/** A buy or sell order in an order book. Shares are reduced as the order gets executed. */
+public class Order {
+    private final long sequence;
     private final String userName;
-    private final boolean isBuy;
-    private int shares;
+    private final String option;
+    private final boolean buy;
     private final double price;
-    private final LocalDateTime timestamp;
+    private int shares;
 
-    public Order(String userName, boolean isBuy, int shares, double price) {
+    public Order(long sequence, String userName, String option, boolean buy, int shares, double price) {
+        this.sequence = sequence;
         this.userName = userName;
-        this.isBuy = isBuy;
+        this.option = option;
+        this.buy = buy;
         this.shares = shares;
         this.price = price;
-        this.timestamp = LocalDateTime.now();
     }
 
-    public void reduceShares(int amount) { this.shares -= amount; }
+    public long getSequence() { return sequence; }
     public String getUserName() { return userName; }
-    public boolean isBuy() { return isBuy; }
-    public int getShares() { return shares; }
+    public String getOption() { return option; }
+    public boolean isBuy() { return buy; }
     public double getPrice() { return price; }
+    public int getShares() { return shares; }
+    public boolean isFilled() { return shares == 0; }
 
-    @Override
-    public int compareTo(Order other) {
-        int priceCompare = Double.compare(this.price, other.price);
-        if (priceCompare != 0) {
-            return this.isBuy ? -priceCompare : priceCompare;
-        }
-        return this.timestamp.compareTo(other.timestamp);
-    }
+    public void reduceShares(int amount) { shares -= amount; }
 }

@@ -1,60 +1,59 @@
 package engine.models;
-import java.util.PriorityQueue;
-import java.util.Collections;
-import java.util.Map;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+/**
+ * The order book of a single option.
+ * Bids are kept from the highest price to the lowest, asks from the lowest to the highest.
+ * Orders with the same price are kept by arrival time (first come, first served).
+ */
 public class OrderBook {
-    private final PriorityQueue<Order> bids; // Max-Heap לקונים
-    private final PriorityQueue<Order> asks; // Min-Heap למוכרים
-    private double lastTradePrice = 0.0;
+    private static final Comparator<Order> BIDS_ORDER =
+            Comparator.comparingDouble(Order::getPrice).reversed().thenComparingLong(Order::getSequence);
+    private static final Comparator<Order> ASKS_ORDER =
+            Comparator.comparingDouble(Order::getPrice).thenComparingLong(Order::getSequence);
 
-    public OrderBook() {
-        this.bids = new PriorityQueue<>();
-        this.asks = new PriorityQueue<>(Collections.reverseOrder());
+    private final String option;
+    private final List<Order> bids = new ArrayList<>();
+    private final List<Order> asks = new ArrayList<>();
+    private Double lastTradePrice = null;
+
+    public OrderBook(String option) {
+        this.option = option;
     }
 
-    public void addBid(Order order) { bids.add(order); }
-    public void addAsk(Order order) { asks.add(order); }
-    public PriorityQueue<Order> getBids() { return bids; }
-    public PriorityQueue<Order> getAsks() { return asks; }
+    public String getOption() { return option; }
+    public List<Order> getBids() { return bids; }
+    public List<Order> getAsks() { return asks; }
+    public Double getLastTradePrice() { return lastTradePrice; }
+    public void setLastTradePrice(double price) { lastTradePrice = price; }
 
-    public void matchWithAsks(Order incomingBid, Map<String, User> users, int eventId, String optionName) {
-        while (incomingBid.getShares() > 0 && !asks.isEmpty()) {
-            Order lowestAsk = asks.peek();
-            if (incomingBid.getPrice() >= lowestAsk.getPrice()) {
-                int sharesToTrade = Math.min(incomingBid.getShares(), lowestAsk.getShares());
-                double tradePrice = lowestAsk.getPrice(); // Buyer pays seller's price
-
-                incomingBid.reduceShares(sharesToTrade);
-                lowestAsk.reduceShares(sharesToTrade);
-                this.lastTradePrice = tradePrice;
-
-                // 1. BUYER PAYS AND GETS SHARES
-                users.get(incomingBid.getUserName()).updateBalance(-(sharesToTrade * tradePrice));
-                users.get(incomingBid.getUserName()).addHoldings(eventId, optionName, sharesToTrade);
-                users.get(incomingBid.getUserName()).addEventCashFlow(eventId, -(sharesToTrade * tradePrice));
-
-                // 2. SELLER GETS MONEY AND LOSES SHARES
-                users.get(lowestAsk.getUserName()).updateBalance(sharesToTrade * tradePrice);
-                users.get(lowestAsk.getUserName()).addHoldings(eventId, optionName, -sharesToTrade);
-                users.get(lowestAsk.getUserName()).addEventCashFlow(eventId, sharesToTrade * tradePrice);
-
-                if (lowestAsk.getShares() == 0) asks.poll();
-            } else {
-                break;
-            }
-        }
+    public void addOrder(Order order) {
+        List<Order> side = order.isBuy() ? bids : asks;
+        side.add(order);
+        side.sort(order.isBuy() ? BIDS_ORDER : ASKS_ORDER);
     }
 
-    public double getLastTradePrice() { return lastTradePrice; }
-    public double getHighestBid() { return bids.isEmpty() ? 0.0 : bids.peek().getPrice(); }
-    public double getLowestAsk() { return asks.isEmpty() ? 0.0 : asks.peek().getPrice(); }
-    public double getMidPrice() {
-        if (bids.isEmpty() || asks.isEmpty()) return 0.0;
-        return (getHighestBid() + getLowestAsk()) / 2.0;
+    public void removeFilledOrders() {
+        bids.removeIf(Order::isFilled);
+        asks.removeIf(Order::isFilled);
     }
-    public double getSpread() {
-        if (bids.isEmpty() || asks.isEmpty()) return 0.0;
-        return getLowestAsk() - getHighestBid();
+
+    public void clear() {
+        bids.clear();
+        asks.clear();
+    }
+
+    public Double getHighestBid() { return bids.isEmpty() ? null : bids.get(0).getPrice(); }
+    public Double getLowestAsk() { return asks.isEmpty() ? null : asks.get(0).getPrice(); }
+
+    public Double getMidPrice() {
+        return (bids.isEmpty() || asks.isEmpty()) ? null : (getHighestBid() + getLowestAsk()) / 2.0;
+    }
+
+    public Double getSpread() {
+        return (bids.isEmpty() || asks.isEmpty()) ? null : getLowestAsk() - getHighestBid();
     }
 }

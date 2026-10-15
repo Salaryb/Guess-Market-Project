@@ -1,441 +1,455 @@
 package engine;
 
-import dto.*;
-import engine.models.*;
-import engine.xml.*;
+import dto.EventDTO;
+import dto.EventDetailsDTO;
+import dto.UserDetailsDTO;
+import dto.UserEventDetailsDTO;
+import dto.UserSummaryDTO;
+import engine.models.Event;
+import engine.models.EventStatus;
+import engine.models.Fill;
+import engine.models.LmsrEvent;
+import engine.models.LmsrTrade;
+import engine.models.Order;
+import engine.models.OrderBookEvent;
+import engine.models.User;
+import engine.xml.XmlParser;
 import exception.GuessMarketException;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 public class GuessMarketEngineImpl implements IGuessMarketEngine {
+    private static final double EPSILON = 1e-9;
+    private static final double MIN_PRICE = 0.01;
+    private static final int MAX_USER_NAME_LENGTH = 30;
+    private static final Pattern USER_NAME_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9 _.\\-]*");
 
-    private final Map<Integer, Event> events = new HashMap<>();
-    private final Map<String, User> users = new HashMap<>();
+    /** Keys are lower-cased names, so every lookup is case insensitive. Insertion order is kept for display. */
+    private final Map<String, Event> events = new LinkedHashMap<>();
+    private final Map<String, User> users = new LinkedHashMap<>();
+    private long version = 0;
+
+    // =====================================================================
+    // Users
+    // =====================================================================
 
     @Override
-    public void loadDataFromXml(String filePath) {
-        try {
-            GuessMarketData xmlData = XmlParser.parseXml(filePath);
-            validateAndLoadData(xmlData);
-        } catch (Exception e) {
-            throw new GuessMarketException("Error loading XML file: " + e.getMessage());
+    public String loginUser(String userName) {
+        String name = validateUserName(userName);
+        User existing = users.get(key(name));
+        if (existing != null && existing.isOnline()) {
+            throw new GuessMarketException("The user name '" + existing.getName()
+                    + "' is already taken by a logged in user. Please choose a different name.");
+        }
+        User user = existing != null ? existing : new User(name);
+        user.setOnline(true);
+        users.put(key(name), user);
+        version++;
+        return user.getName();
+    }
+
+    private String validateUserName(String userName) {
+        String name = userName == null ? "" : userName.trim();
+        if (name.isEmpty()) {
+            throw new GuessMarketException("Please enter a user name.");
+        }
+        if (name.length() > MAX_USER_NAME_LENGTH) {
+            throw new GuessMarketException("The user name is too long (max " + MAX_USER_NAME_LENGTH + " characters).");
+        }
+        if (!USER_NAME_PATTERN.matcher(name).matches()) {
+            throw new GuessMarketException("The user name may contain only English letters, digits, spaces, '_', '.' or '-', "
+                    + "and must start with a letter or a digit.");
+        }
+        return name;
+    }
+
+    @Override
+    public void logoutUser(String userName) {
+        User user = users.get(key(userName));
+        if (user != null) {
+            user.setOnline(false);
+            version++;
         }
     }
 
-    private void validateAndLoadData(GuessMarketData xmlData) {
-        Map<Integer, Event> tempEvents = new HashMap<>();
-        Map<String, User> tempUsers = new HashMap<>();
+    @Override
+    public boolean isUserExists(String userName) {
+        return userName != null && users.containsKey(key(userName));
+    }
 
-        // 1. Load Events
-        for (EventData eData : xmlData.getEvents().getEvents()) {
-            if (tempEvents.containsKey(eData.getId())) {
-                throw new GuessMarketException("Duplicate event ID found: " + eData.getId());
-            }
-
-            Event event;
-            List<String> options = eData.getOptions().getOptions();
-            if (eData.getMethod().getOrderBook() != null) {
-                OrderBookData obData = eData.getMethod().getOrderBook();
-                event = new OrderBookEvent(eData.getId(), eData.getName(), eData.getDescription(),
-                        eData.getCommission().getValue(), eData.getCommission().getType(),
-                        options, obData.isAllowMint(), obData.getD(), obData.getInitial());
-            } else {
-                event = new LmsrEvent(eData.getId(), eData.getName(), eData.getDescription(),
-                        eData.getCommission().getValue(), eData.getCommission().getType(),
-                        options, eData.getMethod().getLmsr().getB());
-            }
-            tempEvents.put(event.getId(), event);
+    @Override
+    public void deposit(String userName, double amount) {
+        User user = getUser(userName);
+        if (Double.isNaN(amount) || Double.isInfinite(amount) || amount <= 0) {
+            throw new GuessMarketException("The deposit amount must be a positive number.");
         }
+        user.changeBalance(amount, "Deposit", "Money loaded to the account", null);
+        version++;
+    }
 
-        // 2. Load Users and Validate EX2 Constraints
-        Map<Integer, String> eventToMM = new HashMap<>();
+    @Override
+    public List<UserSummaryDTO> getAllUsers() {
+        return users.values().stream().map(DtoFactory::toUserSummaryDTO).toList();
+    }
 
-        for (UserData uData : xmlData.getUsers().getUsers()) {
-            if (tempUsers.containsKey(uData.getName())) {
-                throw new GuessMarketException("Duplicate username found: " + uData.getName());
-            }
-            if (uData.getInitialCash() <= 0) {
-                throw new GuessMarketException("Initial balance must be greater than 0 for user: " + uData.getName());
-            }
+    @Override
+    public UserDetailsDTO getUserDetails(String userName) {
+        return DtoFactory.toUserDetailsDTO(getUser(userName), events.values());
+    }
 
-            Set<Integer> mmEvents = new HashSet<>();
-            if (uData.getMarketMakerEvents() != null && uData.getMarketMakerEvents().getEvents() != null) {
-                for (EventIdData eid : uData.getMarketMakerEvents().getEvents()) {
-                    int eId = eid.getId();
-                    if (!tempEvents.containsKey(eId)) {
-                        throw new GuessMarketException("User " + uData.getName() + " is defined as Market Maker for a non-existent event ID: " + eId);
-                    }
-                    if (eventToMM.containsKey(eId)) {
-                        throw new GuessMarketException("Event ID " + eId + " has more than one Market Maker defined.");
-                    }
-                    mmEvents.add(eId);
-                    eventToMM.put(eId, uData.getName());
-                }
-            }
-            tempUsers.put(uData.getName(), new User(uData.getName(), uData.getInitialCash(), mmEvents));
+    @Override
+    public UserEventDetailsDTO getUserEventDetails(String userName, String eventName) {
+        return DtoFactory.toUserEventDetailsDTO(getUser(userName), getEvent(eventName));
+    }
+
+    // =====================================================================
+    // Events
+    // =====================================================================
+
+    @Override
+    public List<String> loadEventsFromXml(InputStream xmlContent, String uploaderName) {
+        User uploader = getUser(uploaderName);
+        List<Event> newEvents = EventLoader.createEvents(XmlParser.parse(xmlContent), events.keySet(), uploader.getName());
+
+        List<String> addedNames = new ArrayList<>();
+        for (Event event : newEvents) {
+            events.put(key(event.getName()), event);
+            uploader.addMarketMakerEvent(event.getName());
+            addedNames.add(event.getName());
         }
-
-        for (Integer eventId : tempEvents.keySet()) {
-            if (!eventToMM.containsKey(eventId)) {
-                throw new GuessMarketException("Event ID " + eventId + " is missing a Market Maker.");
-            }
-        }
-
-        // Apply to actual system maps only if fully validated
-        this.events.clear();
-        this.events.putAll(tempEvents);
-        this.users.clear();
-        this.users.putAll(tempUsers);
+        version++;
+        return addedNames;
     }
 
     @Override
     public List<EventDTO> getAllEvents() {
-        return events.values().stream()
-                .map(e -> new EventDTO(e.getId(), e.getName(),
-                        e.isClosed() ? "Closed" : (e.isActive() ? "Active" : "Pending"),
-                        e.isOrderBook() ? "Order Book" : "LMSR",
-                        e.getCommission(), e.getCommissionType()))
-                .collect(Collectors.toList());
+        return events.values().stream().map(DtoFactory::toEventDTO).toList();
     }
 
     @Override
-    public List<String> getAllUsernames() {
-        return new ArrayList<>(users.keySet());
+    public EventDetailsDTO getEventDetails(String eventName) {
+        return DtoFactory.toEventDetailsDTO(getEvent(eventName), users);
     }
 
     @Override
-    public double getUserBalance(String username) {
-        return users.get(username).getBalance();
-    }
-
-    @Override
-    public boolean isUserBlocked(String username) {
-        return users.get(username).isBlocked();
-    }
-
-    @Override
-    public List<UserEventSummaryDTO> getUserActiveEvents(String username) {
-        // For now, this returns all events so the user can select them in the UI to trade or activate
-        return events.values().stream()
-                .map(e -> new UserEventSummaryDTO(e.getId(), e.getName(), 0.0, e.isClosed(), 0.0))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<HoldingDTO> getUserHoldingsForEvent(String username, int eventId) {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public void activateEvent(int eventId, String initiatorUsername) {
-        Event event = events.get(eventId);
-        User user = users.get(initiatorUsername);
-
-        if (event.isActive() || event.isClosed()) {
-            throw new GuessMarketException("The event is already active or closed.");
-        }
-        if (!user.isMMFor(eventId)) {
-            throw new GuessMarketException("Only the Market Maker can activate this event.");
+    public String activateEvent(String eventName, String userName) {
+        Event event = getEvent(eventName);
+        User marketMaker = getUser(userName);
+        requireMarketMaker(event, marketMaker, "activate");
+        if (event.getStatus() != EventStatus.NOT_STARTED) {
+            throw new GuessMarketException("Event '" + event.getName() + "' is already "
+                    + event.getStatus().getDisplayName().toLowerCase(Locale.ROOT) + " and cannot be activated again.");
         }
 
-        if (event.isOrderBook()) {
-            OrderBookEvent obEvent = (OrderBookEvent) event;
-            double cost = obEvent.getInitialInvestment();
-            if (user.getBalance() < cost) {
-                throw new GuessMarketException("Insufficient funds to activate the event. Required: " + cost);
-            }
-            user.updateBalance(-cost);
-            user.addEventCashFlow(eventId, -cost);
-            obEvent.addToAccountBalance(cost);
-            int sharesToIssue = (int) (cost / obEvent.getBaseValueD());
-            for (String opt : obEvent.getOptionNames()) {
-                user.addHoldings(eventId, opt, sharesToIssue);
-            }
+        double cost = event.getActivationCost();
+        if (marketMaker.getBalance() + EPSILON < cost) {
+            throw new GuessMarketException(String.format(
+                    "Not enough money to activate '%s': it requires %.2f but your balance is %.2f. Please deposit money first.",
+                    event.getName(), cost, marketMaker.getBalance()));
         }
-        event.setActive(true);
+
+        marketMaker.changeBalance(-cost, "Event Activation",
+                (event instanceof LmsrEvent ? "LMSR subsidy for '" : "Initial shares for '") + event.getName() + "'",
+                event.getName());
+        event.addToAccount(cost);
+        if (event instanceof OrderBookEvent ob) {
+            issueInitialShares(ob, marketMaker, cost);
+        }
+        event.activate();
+        version++;
+        return String.format("Event '%s' is now active. %.2f were moved from your account to the event account.",
+                event.getName(), cost);
+    }
+
+    private void issueInitialShares(OrderBookEvent event, User marketMaker, double cost) {
+        int sharesPerOption = event.getInitialSharesPerOption();
+        if (sharesPerOption == 0) {
+            return;
+        }
+        double paidPerOption = cost / event.getOptions().size();
+        for (String option : event.getOptions()) {
+            marketMaker.addShares(event.getName(), option, sharesPerOption, paidPerOption);
+        }
+        event.addParticipant(marketMaker.getName());
     }
 
     @Override
-    public void closeEvent(int eventId, String initiatorUsername, String winningOption) {
-        Event event = events.get(eventId);
-        User mmUser = users.get(initiatorUsername);
-
+    public String closeEvent(String eventName, String userName, String winningOption) {
+        Event event = getEvent(eventName);
+        User marketMaker = getUser(userName);
+        requireMarketMaker(event, marketMaker, "close");
         if (!event.isActive()) {
-            throw new GuessMarketException("The event is not currently active.");
+            throw new GuessMarketException("Event '" + event.getName() + "' is not active ("
+                    + event.getStatus().getDisplayName() + "), so it cannot be closed.");
         }
-        if (!mmUser.isMMFor(eventId)) {
-            throw new GuessMarketException("Only the Market Maker can close this event.");
+        String winner = event.resolveOption(winningOption);
+
+        if (event instanceof OrderBookEvent ob) {
+            ob.cancelAllOrders();
         }
+        double totalPaid = payWinners(event, winner, marketMaker);
+        double leftover = returnLeftoverToMarketMaker(event, marketMaker);
+        event.end(winner);
+        version++;
 
-        double totalPayouts = 0.0;
-        double totalCommissions = 0.0;
-        boolean isOnCloseCommission = event.getCommissionType().equals("on-close");
+        return String.format("Event '%s' was closed. Winning option: '%s'. Paid %.2f to the winners, "
+                        + "%.2f were returned to the market maker. Total commission collected: %.2f.",
+                event.getName(), winner, totalPaid, leftover, event.getTotalCommissionCollected());
+    }
 
-        // 1. Distribute funds to all users who hold the winning option
-        for (User user : users.values()) {
-            Map<String, Integer> holdings = user.getEventHoldings(eventId);
-            if (holdings != null && holdings.containsKey(winningOption)) {
-                int winningShares = holdings.get(winningOption);
-
-                if (winningShares > 0) {
-                    // Order book pays 'd' per share. LMSR pays 1 per share.
-                    double baseValue = event.isOrderBook() ? ((OrderBookEvent) event).getBaseValueD() : 1.0;
-                    double grossWinnings = winningShares * baseValue;
-
-                    double commissionToPay = 0.0;
-                    if (isOnCloseCommission) {
-                        commissionToPay = grossWinnings * (event.getCommission() / 100.0);
-                        totalCommissions += commissionToPay;
-                        event.addCommission(commissionToPay); // Track for the UI
-                    }
-
-                    double netWinnings = grossWinnings - commissionToPay;
-                    user.updateBalance(netWinnings);
-                    totalPayouts += grossWinnings;
-                }
+    /** Pays every holder of the winning option, minus the on-close commission (if relevant). */
+    private double payWinners(Event event, String winner, User marketMaker) {
+        double totalPaid = 0.0;
+        for (String participantName : event.getParticipants()) {
+            User user = users.get(key(participantName));
+            int shares = user.getShares(event.getName(), winner);
+            if (shares <= 0) {
+                continue;
+            }
+            double gross = shares * event.getPayoutPerShare();
+            event.addToAccount(-gross);
+            user.changeBalance(gross, "Event Payout",
+                    String.format("%d winning '%s' shares in '%s'", shares, winner, event.getName()), event.getName());
+            totalPaid += gross;
+            if (event.isOnCloseCommission()) {
+                chargeCommission(event, user, marketMaker, event.calculateCommission(gross));
             }
         }
-
-        // 2. Give the collected commissions to the Market Maker
-        if (totalCommissions > 0) {
-            mmUser.updateBalance(totalCommissions);
-        }
-
-        // 3. For LMSR, return any leftover subsidy to the Market Maker
-        if (!event.isOrderBook()) {
-            double remainingBalance = event.getAccountBalance() - totalPayouts;
-            if (remainingBalance > 0) {
-                mmUser.updateBalance(remainingBalance);
-            }
-        }
-
-        // 4. Close the event permanently
-        event.setActive(false);
-        event.setClosed(true);
-        event.setWinningOption(winningOption);
-        event.emptyAccount();
+        return totalPaid;
     }
 
-    @Override
-    public void placeOrderBookOrder(int eventId, String username, String option, int shares, double price, boolean isBuy) {
-        User user = users.get(username);
-        Event event = events.get(eventId);
-
-        if (user.isBlocked()) {
-            throw new GuessMarketException("This user is blocked due to a negative balance.");
-        }
-        if (!event.isActive()) {
-            throw new GuessMarketException("Cannot place order. The event is not active.");
-        }
-        if (!event.isOrderBook()) {
-            throw new GuessMarketException("Cannot place order. This is not an Order Book event.");
-        }
-
-        OrderBookEvent obEvent = (OrderBookEvent) event;
-        if (price >= obEvent.getBaseValueD()) {
-            throw new GuessMarketException("Order price must be lower than the event's base value (" + obEvent.getBaseValueD() + ").");
-        }
-
-        double totalCost = shares * price;
-        double comm = 0.0;
-
-        if (isBuy && event.getCommissionType().equals("on-purchase")) {
-            comm = totalCost * (event.getCommission() / 100.0);
-        }
-
-        event.addCommission(comm);
-
-        if (isBuy && user.getBalance() < (totalCost + comm)) {
-            throw new GuessMarketException("Insufficient balance to place this order.");
-        }
-
-        Order order = new Order(username, isBuy, shares, price);
-        obEvent.handleNewOrder(option, order, users, eventId);
-    }
-
-    // ==========================================
-    // UI FETCH METHODS FOR EVENT DETAILS
-    // ==========================================
-
-    @Override
-    public List<OrderDTO> getBuyOrders(int eventId) {
-        Event event = events.get(eventId);
-        if (event == null || !event.isOrderBook()) return new ArrayList<>();
-
-        OrderBookEvent obEvent = (OrderBookEvent) event;
-        List<OrderDTO> buyOrders = new ArrayList<>();
-
-        for (String option : obEvent.getOptionNames()) {
-            OrderBook book = obEvent.getOrderBook(option);
-            for (Order order : book.getBids()) {
-                // Pass the 'option' into the new DTO here
-                buyOrders.add(new OrderDTO(order.getUserName(), option, order.getShares(), order.getPrice(), true));
-            }
-        }
-        return buyOrders;
-    }
-
-    @Override
-    public List<OrderDTO> getSellOrders(int eventId) {
-        Event event = events.get(eventId);
-        if (event == null || !event.isOrderBook()) return new ArrayList<>();
-
-        OrderBookEvent obEvent = (OrderBookEvent) event;
-        List<OrderDTO> sellOrders = new ArrayList<>();
-
-        for (String option : obEvent.getOptionNames()) {
-            OrderBook book = obEvent.getOrderBook(option);
-            for (Order order : book.getAsks()) {
-                // Pass the 'option' into the new DTO here
-                sellOrders.add(new OrderDTO(order.getUserName(), option, order.getShares(), order.getPrice(), false));
-            }
-        }
-        return sellOrders;
-    }
-
-    @Override
-    public List<TradeDTO> getLmsrTradeHistory(int eventId) {
-        Event event = events.get(eventId);
-        if (event == null || event.isOrderBook()) return new ArrayList<>();
-
-        LmsrEvent lmsrEvent = (LmsrEvent) event;
-
-        // Maps your Trade record to the UI's TradeDTO[cite: 16]
-        // NOTE: Requires adding getTrades() to LmsrEvent (See step 2)
-        return lmsrEvent.getTrades().stream()
-                .map(trade -> new TradeDTO(trade.optionName(), trade.shares(), trade.pricePaid()))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<OptionDTO> getLmsrOptionStatus(int eventId) {
-        Event event = events.get(eventId);
-        if (event == null || event.isOrderBook()) return new ArrayList<>();
-
-        LmsrEvent lmsrEvent = (LmsrEvent) event;
-
-        // NOTE: Requires adding getOptionShares() to LmsrEvent (See step 2)
-        return lmsrEvent.getOptionShares().entrySet().stream()
-                .map(entry -> new OptionDTO(entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public double getEventTotalCommission(int eventId) {
-        Event event = events.get(eventId);
-        // NOTE: Requires adding getTotalCommissionCollected() to Event (See step 2)
-        return (event != null) ? event.getTotalCommissionCollected() : 0.0;
-    }
-
-    @Override
-    public String getEventWinningOption(int eventId) {
-        Event event = events.get(eventId);
-        if (event == null || !event.isClosed()) return "N/A";
-
-        // NOTE: Requires adding getWinningOption() to Event (See step 2)
-        return event.getWinningOption();
-    }
-
-    @Override
-    public void placeLmsrOrder(int eventId, String username, String option, int shares) {
-        User user = users.get(username);
-        Event event = events.get(eventId);
-
-        if (user.isBlocked()) {
-            throw new GuessMarketException("This user is blocked due to a negative balance.");
-        }
-        if (!event.isActive()) {
-            throw new GuessMarketException("Cannot place order. The event is not active.");
-        }
-        if (event.isOrderBook()) {
-            throw new GuessMarketException("Cannot place LMSR order. This is an Order Book event.");
-        }
-
-        LmsrEvent lmsrEvent = (LmsrEvent) event;
-        Map<String, Integer> currentShares = lmsrEvent.getOptionShares();
-        int b = lmsrEvent.getB();
-
-        // 1. Calculate LMSR Cost using the Ex1 Formula
-        double sumBefore = 0.0;
-        double sumAfter = 0.0;
-
-        // Initialize shares if they don't exist yet
-        for (String optName : lmsrEvent.getOptionNames()) {
-            currentShares.putIfAbsent(optName, 0);
-        }
-
-        // Calculate equations
-        for (Map.Entry<String, Integer> entry : currentShares.entrySet()) {
-            int currentQty = entry.getValue();
-            int futureQty = currentQty + (entry.getKey().equals(option) ? shares : 0);
-
-            sumBefore += Math.exp((double) currentQty / b);
-            sumAfter += Math.exp((double) futureQty / b);
-        }
-
-        double costBefore = b * Math.log(sumBefore);
-        double costAfter = b * Math.log(sumAfter);
-        double totalCost = costAfter - costBefore;
-
-        // 2. Calculate Commission
-        double comm = 0.0;
-        if (event.getCommissionType().equals("on-purchase")) {
-            comm = totalCost * (event.getCommission() / 100.0);
-        }
-
-        // 3. Check Balance
-        if (user.getBalance() < (totalCost + comm)) {
-            throw new GuessMarketException("Insufficient balance to place this LMSR order. Required: " + String.format("%.2f", totalCost + comm));
-        }
-
-        // 4. Execute Trade
-        event.addCommission(comm);
-        user.recordTrade(eventId, option, shares, -totalCost, comm);
-        lmsrEvent.addToAccountBalance(totalCost);
-
-        // Update Event Data
-        currentShares.put(option, currentShares.get(option) + shares);
-        lmsrEvent.getTrades().add(new Trade(option, shares, totalCost));
-    }
-
-    @Override
-    public List<String> getEventOptions(int eventId) {
-        Event event = events.get(eventId);
-        return (event != null) ? event.getOptionNames() : new ArrayList<>();
-    }
-
-    @Override
-    public List<ParticipantDTO> getEventParticipants(int eventId) {
-        List<ParticipantDTO> list = new ArrayList<>();
-
-        for (User user : users.values()) {
-            Map<String, Integer> userHoldings = user.getEventHoldings(eventId);
-
-            // Only include users who actually participated in this event
-            if (!userHoldings.isEmpty()) {
-                int totalQty = userHoldings.values().stream().mapToInt(Integer::intValue).sum();
-                // Cash flow is negative when spending money, so we use absolute value for "Value"
-                double totalValue = Math.abs(user.getEventCashFlow(eventId));
-
-                list.add(new ParticipantDTO(user.getName(), totalQty, totalValue));
-            }
-        }
-        return list;
-    }
-
-    @Override
-    public double getEventAccountBalance(int eventId) {
-        Event event = events.get(eventId);
-        return (event != null) ? event.getAccountBalance() : 0.0;
-    }
-
-    @Override
-    public double getLastTradePrice(int eventId, String option) {
-        Event event = events.get(eventId);
-        if (event != null && event.isOrderBook()) {
-            return ((OrderBookEvent) event).getLastPrice(option);
+    private double returnLeftoverToMarketMaker(Event event, User marketMaker) {
+        double leftover = event.getAccountBalance();
+        if (leftover > EPSILON) {
+            marketMaker.changeBalance(leftover, "Event Account Return",
+                    "Money left in the account of '" + event.getName() + "'", event.getName());
+            event.addToAccount(-leftover);
+            return leftover;
         }
         return 0.0;
+    }
+
+    // =====================================================================
+    // Trading
+    // =====================================================================
+
+    @Override
+    public String buyLmsrShares(String eventName, String userName, String option, int shares) {
+        Event event = getEvent(eventName);
+        User user = getUser(userName);
+        if (!(event instanceof LmsrEvent lmsr)) {
+            throw new GuessMarketException("Event '" + event.getName() + "' is an Order Book event - please place an order instead.");
+        }
+        requireCanTrade(event, user);
+        requirePositiveShares(shares);
+        String chosenOption = event.resolveOption(option);
+
+        double cost = lmsr.calculatePurchaseCost(chosenOption, shares);
+        if (Double.isNaN(cost) || Double.isInfinite(cost)) {
+            throw new GuessMarketException("The requested amount of shares is too large for this event.");
+        }
+        double commission = event.isOnPurchaseCommission() ? event.calculateCommission(cost) : 0.0;
+        requireAvailableMoney(user, cost + commission);
+
+        user.changeBalance(-cost, "LMSR Purchase",
+                String.format("Bought %d '%s' shares in '%s'", shares, chosenOption, event.getName()), event.getName());
+        user.addShares(event.getName(), chosenOption, shares, cost);
+        event.addToAccount(cost);
+        if (commission > 0) {
+            chargeCommission(event, user, getUser(event.getMarketMaker()), commission);
+        }
+        lmsr.recordPurchase(new LmsrTrade(user.getName(), chosenOption, shares, cost, commission));
+        event.addParticipant(user.getName());
+        version++;
+
+        return String.format("Bought %d shares of '%s' for %.2f (%.2f per share) + commission %.2f = total %.2f. "
+                        + "The new price of '%s' is %.2f.",
+                shares, chosenOption, cost, cost / shares, commission, cost + commission,
+                chosenOption, lmsr.getPrice(chosenOption));
+    }
+
+    @Override
+    public String placeOrder(String eventName, String userName, String option, boolean buy, int shares, double price) {
+        Event event = getEvent(eventName);
+        User user = getUser(userName);
+        if (!(event instanceof OrderBookEvent ob)) {
+            throw new GuessMarketException("Event '" + event.getName() + "' is an LMSR event - please buy shares instead.");
+        }
+        requireCanTrade(event, user);
+        requirePositiveShares(shares);
+        validatePrice(ob, price);
+        String chosenOption = event.resolveOption(option);
+
+        if (buy) {
+            double amount = shares * price;
+            double commission = event.isOnPurchaseCommission() ? event.calculateCommission(amount) : 0.0;
+            requireAvailableMoney(user, amount + commission);
+        } else {
+            requireSharesToSell(ob, user, chosenOption, shares);
+        }
+
+        Order order = ob.createOrder(user.getName(), chosenOption, buy, shares, price);
+        List<Fill> fills = ob.submitOrder(order);
+        event.addParticipant(user.getName());
+        fills.forEach(fill -> settleFill(ob, fill));
+        version++;
+
+        return describeOrderResult(shares, order.getShares(), fills);
+    }
+
+    private void validatePrice(OrderBookEvent event, double price) {
+        if (Double.isNaN(price) || price < MIN_PRICE - EPSILON || price > event.getMaxPrice() + EPSILON) {
+            throw new GuessMarketException(String.format("The price per share must be between %.2f and %.2f (d - 0.01).",
+                    MIN_PRICE, event.getMaxPrice()));
+        }
+        if (Math.abs(price * 100 - Math.round(price * 100)) > 1e-6) {
+            throw new GuessMarketException("The price can have at most 2 digits after the decimal point.");
+        }
+    }
+
+    private void requireSharesToSell(OrderBookEvent event, User user, String option, int shares) {
+        int owned = user.getShares(event.getName(), option);
+        int alreadyOffered = event.getPendingSellShares(user.getName(), option);
+        if (owned - alreadyOffered < shares) {
+            throw new GuessMarketException(String.format(
+                    "You cannot sell %d '%s' shares: you hold %d, and %d of them are already offered for sale.",
+                    shares, option, owned, alreadyOffered));
+        }
+    }
+
+    /** Moves money and shares between the users (and the event account) for a single execution. */
+    private void settleFill(OrderBookEvent event, Fill fill) {
+        User buyer = getUser(fill.buyer());
+        User counterparty = getUser(fill.counterparty());
+        User marketMaker = getUser(event.getMarketMaker());
+        String eventName = event.getName();
+        double buyerAmount = fill.shares() * fill.buyerPrice();
+
+        buyer.changeBalance(-buyerAmount, "Order Book Buy", String.format("Bought %d '%s' shares @ %.2f in '%s'",
+                fill.shares(), fill.option(), fill.buyerPrice(), eventName), eventName);
+        buyer.addShares(eventName, fill.option(), fill.shares(), buyerAmount);
+        chargePurchaseCommission(event, buyer, marketMaker, buyerAmount);
+
+        if (fill.type() == Fill.FillType.TRADE) {
+            counterparty.changeBalance(buyerAmount, "Order Book Sell", String.format("Sold %d '%s' shares @ %.2f in '%s'",
+                    fill.shares(), fill.option(), fill.buyerPrice(), eventName), eventName);
+            counterparty.removeShares(eventName, fill.option(), fill.shares());
+        } else {
+            double otherAmount = fill.shares() * fill.otherPrice();
+            counterparty.changeBalance(-otherAmount, "Order Book Buy (Mint)", String.format(
+                    "Bought %d new '%s' shares @ %.2f in '%s'", fill.shares(), fill.otherOption(), fill.otherPrice(), eventName),
+                    eventName);
+            counterparty.addShares(eventName, fill.otherOption(), fill.shares(), otherAmount);
+            chargePurchaseCommission(event, counterparty, marketMaker, otherAmount);
+            event.addToAccount(buyerAmount + otherAmount);
+        }
+    }
+
+    private void chargePurchaseCommission(Event event, User payer, User marketMaker, double purchaseAmount) {
+        if (event.isOnPurchaseCommission()) {
+            chargeCommission(event, payer, marketMaker, event.calculateCommission(purchaseAmount));
+        }
+    }
+
+    /** Moves a commission from the payer to the event's market maker, recording it on both sides. */
+    private void chargeCommission(Event event, User payer, User marketMaker, double amount) {
+        if (amount <= 0) {
+            return;
+        }
+        payer.changeBalance(-amount, "Commission Paid",
+                String.format("%d%% commission in '%s'", event.getCommission(), event.getName()), event.getName());
+        payer.addCommissionPaid(event.getName(), amount);
+        marketMaker.changeBalance(amount, "Commission Received",
+                String.format("From %s in '%s'", payer.getName(), event.getName()), event.getName());
+        event.addCommission(amount);
+    }
+
+    private String describeOrderResult(int requested, int resting, List<Fill> fills) {
+        int traded = fills.stream().filter(f -> f.type() == Fill.FillType.TRADE).mapToInt(Fill::shares).sum();
+        int minted = fills.stream().filter(f -> f.type() == Fill.FillType.MINT).mapToInt(Fill::shares).sum();
+        StringBuilder message = new StringBuilder("Order for " + requested + " shares received.");
+        if (traded > 0) {
+            message.append(' ').append(traded).append(" shares were traded.");
+        }
+        if (minted > 0) {
+            message.append(' ').append(minted).append(" new shares were minted.");
+        }
+        if (resting > 0) {
+            message.append(' ').append(resting).append(" shares are waiting in the order book.");
+        }
+        return message.toString();
+    }
+
+    // =====================================================================
+    // Validation helpers
+    // =====================================================================
+
+    private Event getEvent(String eventName) {
+        Event event = eventName == null ? null : events.get(key(eventName));
+        if (event == null) {
+            throw new GuessMarketException("The event '" + eventName + "' does not exist.");
+        }
+        return event;
+    }
+
+    private User getUser(String userName) {
+        User user = userName == null ? null : users.get(key(userName));
+        if (user == null) {
+            throw new GuessMarketException("The user '" + userName + "' does not exist.");
+        }
+        return user;
+    }
+
+    private void requireMarketMaker(Event event, User user, String action) {
+        if (!user.isMarketMakerOf(event.getName())) {
+            throw new GuessMarketException("Only the market maker of '" + event.getName() + "' ("
+                    + event.getMarketMaker() + ") can " + action + " it.");
+        }
+    }
+
+    private void requireCanTrade(Event event, User user) {
+        if (user.isBlocked()) {
+            throw new GuessMarketException("Your account is blocked because its balance is negative. Please deposit money.");
+        }
+        if (!event.isActive()) {
+            throw new GuessMarketException("Event '" + event.getName() + "' is not active ("
+                    + event.getStatus().getDisplayName() + "), so trading is not possible.");
+        }
+    }
+
+    private void requirePositiveShares(int shares) {
+        if (shares <= 0) {
+            throw new GuessMarketException("The number of shares must be a positive whole number.");
+        }
+    }
+
+    /** Money the user can spend: his balance minus what is already committed in waiting buy orders. */
+    private void requireAvailableMoney(User user, double required) {
+        double committed = events.values().stream()
+                .filter(e -> e instanceof OrderBookEvent)
+                .mapToDouble(e -> ((OrderBookEvent) e).getPendingBuyAmount(user.getName()))
+                .sum();
+        double available = user.getBalance() - committed;
+        if (available + EPSILON < required) {
+            throw new GuessMarketException(String.format(
+                    "Not enough money: this action requires %.2f but you have %.2f available "
+                            + "(balance %.2f, %.2f reserved for your waiting buy orders). Please deposit money.",
+                    required, available, user.getBalance(), committed));
+        }
+    }
+
+    @Override
+    public long getVersion() {
+        return version;
+    }
+
+    private static String key(String name) {
+        return name.trim().toLowerCase(Locale.ROOT);
     }
 }
